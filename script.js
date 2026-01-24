@@ -3,6 +3,7 @@
 // ========================================
 let piPriceUSD = 3.14; // GCV Price - Fixed at $3.14
 let selectedNetwork = 'BEP20';
+let isBuyingPi = false; // false = selling Pi, true = buying Pi
 
 // ========================================
 // INITIALIZATION
@@ -133,8 +134,6 @@ function initializeDexPage() {
 
 // Update all price displays on the page
 function updatePriceDisplay() {
-    const promoPrice = piPriceUSD * 1.05;
-    
     const livePriceElement = document.getElementById('livePiPrice');
     const promoPriceElement = document.getElementById('promoPrice');
     const exchangeRateElement = document.getElementById('exchangeRate');
@@ -144,47 +143,98 @@ function updatePriceDisplay() {
         livePriceElement.textContent = '$' + piPriceUSD.toFixed(2);
     }
     
-    // Update promo price (5% extra)
+    // Update promo price (now same as regular price)
     if (promoPriceElement) {
-        promoPriceElement.textContent = '$' + promoPrice.toFixed(2);
+        promoPriceElement.textContent = '$' + piPriceUSD.toFixed(2);
     }
     
     // Update exchange rate
     if (exchangeRateElement) {
-        exchangeRateElement.textContent = '1 PI = $' + promoPrice.toFixed(2) + ' USDT';
+        exchangeRateElement.textContent = '1 PI = $' + piPriceUSD.toFixed(2) + ' USDT';
     }
     
-    // Recalculate USDT amount if Pi amount is already entered
-    const piAmountInput = document.getElementById('piAmount');
-    if (piAmountInput) {
-        const piAmount = parseFloat(piAmountInput.value) || 0;
-        if (piAmount > 0) {
-            calculateUSDT();
-        }
-    }
+    // Recalculate amount if input is already entered
+    calculateAmount();
 }
 
-// Calculate USDT amount based on Pi amount
-function calculateUSDT() {
+// Calculate output amount based on input amount
+function calculateAmount() {
     const piAmountInput = document.getElementById('piAmount');
     const usdtAmountInput = document.getElementById('usdtAmount');
-    const promoBonusElement = document.getElementById('promoBonus');
     
     if (!piAmountInput || !usdtAmountInput) {
         return;
     }
     
-    const piAmount = parseFloat(piAmountInput.value) || 0;
-    const promoPrice = piPriceUSD * 1.05;
-    const usdtAmount = piAmount * promoPrice;
-    const bonus = piAmount * piPriceUSD * 0.05;
+    if (isBuyingPi) {
+        // Buying Pi with USDT
+        const usdtAmount = parseFloat(usdtAmountInput.value) || 0;
+        const piAmount = usdtAmount / piPriceUSD;
+        piAmountInput.value = piAmount > 0 ? piAmount.toFixed(4) : '';
+    } else {
+        // Selling Pi for USDT
+        const piAmount = parseFloat(piAmountInput.value) || 0;
+        const usdtAmount = piAmount * piPriceUSD;
+        usdtAmountInput.value = usdtAmount > 0 ? usdtAmount.toFixed(2) : '';
+    }
+}
+
+// For backwards compatibility
+function calculateUSDT() {
+    calculateAmount();
+}
+
+// Switch between buying and selling Pi
+function switchTradePair() {
+    isBuyingPi = !isBuyingPi;
     
-    // Update USDT amount
-    usdtAmountInput.value = usdtAmount.toFixed(2);
+    const piAmountInput = document.getElementById('piAmount');
+    const usdtAmountInput = document.getElementById('usdtAmount');
+    const fromLabel = document.querySelector('.token-input:first-of-type .token-header span:first-child');
+    const toLabel = document.querySelector('.token-input:last-of-type .token-header span:first-child');
+    const tradeButton = document.querySelector('.btn');
+    const walletAddressLabel = document.querySelector('.wallet-address-section label');
+    const walletAddressHint = document.querySelector('.wallet-address-section small');
     
-    // Update bonus display
-    if (promoBonusElement) {
-        promoBonusElement.textContent = '+$' + bonus.toFixed(2);
+    // Clear inputs
+    if (piAmountInput) piAmountInput.value = '';
+    if (usdtAmountInput) usdtAmountInput.value = '';
+    
+    // Update labels
+    if (isBuyingPi) {
+        // Buying Pi with USDT
+        if (fromLabel) fromLabel.textContent = 'From';
+        if (toLabel) toLabel.textContent = 'To';
+        if (tradeButton) tradeButton.textContent = 'Buy Pi Coin';
+        if (walletAddressLabel) walletAddressLabel.textContent = 'Receiving Pi Wallet Address *';
+        if (walletAddressHint) walletAddressHint.textContent = 'Enter your Pi wallet address where you want to receive Pi';
+        
+        // Make USDT input editable and Pi input readonly
+        if (usdtAmountInput) {
+            usdtAmountInput.removeAttribute('readonly');
+            usdtAmountInput.setAttribute('oninput', 'calculateAmount()');
+        }
+        if (piAmountInput) {
+            piAmountInput.setAttribute('readonly', 'true');
+            piAmountInput.removeAttribute('oninput');
+        }
+    } else {
+        // Selling Pi for USDT
+        if (fromLabel) fromLabel.textContent = 'From';
+        if (toLabel) toLabel.textContent = 'To';
+        if (tradeButton) tradeButton.textContent = 'Sell Pi Coin';
+        if (walletAddressLabel) walletAddressLabel.textContent = 'Receiving Wallet Address *';
+        if (walletAddressHint) walletAddressHint.textContent = 'Enter the wallet address where you want to receive USDT';
+        
+        // Make Pi input editable and USDT input readonly
+        if (piAmountInput) {
+            piAmountInput.removeAttribute('readonly');
+            piAmountInput.setAttribute('oninput', 'calculateAmount()');
+        }
+        if (usdtAmountInput) {
+            usdtAmountInput.setAttribute('readonly', 'true');
+            usdtAmountInput.removeAttribute('oninput');
+        }
     }
 }
 
@@ -207,7 +257,10 @@ function selectNetwork(network) {
     }
     
     // Close the network menu
-    toggleNetworkMenu();
+    const menu = document.getElementById('networkMenu');
+    if (menu) {
+        menu.classList.add('hidden');
+    }
 }
 
 // ========================================
@@ -228,10 +281,15 @@ function executeTrade() {
     const usdtAmount = parseFloat(usdtAmountInput.value);
     const walletAddress = walletAddressInput.value.trim();
     
-    // Validate Pi amount
+    // Validate amounts
     if (!piAmount || piAmount <= 0 || isNaN(piAmount)) {
-        alert('Please enter a valid amount of Pi to sell.');
+        alert('Please enter a valid amount of Pi.');
         piAmountInput.focus();
+        return;
+    }
+    
+    if (!usdtAmount || usdtAmount <= 0 || isNaN(usdtAmount)) {
+        alert('Please enter a valid amount.');
         return;
     }
     
@@ -243,28 +301,36 @@ function executeTrade() {
     }
     
     // Build confirmation message
-    const confirmMessage = 
-        'Trade Confirmation\n\n' +
-        '════════════════════════\n' +
-        'Selling: ' + piAmount.toFixed(2) + ' PI\n' +
-        'Receiving: ' + usdtAmount + ' USDT\n' +
-        'Network: ' + selectedNetwork + '\n' +
-        'Wallet: ' + walletAddress.substring(0, 10) + '...' + walletAddress.substring(walletAddress.length - 6) + '\n' +
-        '════════════════════════\n\n' +
-        'Transaction is being processed...\n' +
-        'You will receive a confirmation shortly.';
+    let confirmMessage;
+    if (isBuyingPi) {
+        confirmMessage = 
+            'Trade Confirmation\n\n' +
+            '════════════════════════\n' +
+            'Spending: ' + usdtAmount.toFixed(2) + ' USDT\n' +
+            'Receiving: ' + piAmount.toFixed(4) + ' PI\n' +
+            'Network: ' + selectedNetwork + '\n' +
+            'Pi Wallet: ' + walletAddress.substring(0, 10) + '...' + walletAddress.substring(walletAddress.length - 6) + '\n' +
+            '════════════════════════\n\n' +
+            'Transaction is being processed...\n' +
+            'You will receive your Pi shortly.';
+    } else {
+        confirmMessage = 
+            'Trade Confirmation\n\n' +
+            '════════════════════════\n' +
+            'Selling: ' + piAmount.toFixed(4) + ' PI\n' +
+            'Receiving: ' + usdtAmount.toFixed(2) + ' USDT\n' +
+            'Network: ' + selectedNetwork + '\n' +
+            'USDT Wallet: ' + walletAddress.substring(0, 10) + '...' + walletAddress.substring(walletAddress.length - 6) + '\n' +
+            '════════════════════════\n\n' +
+            'Transaction is being processed...\n' +
+            'You will receive a confirmation shortly.';
+    }
     
     // Show confirmation alert
     alert(confirmMessage);
     
     // Here you would integrate with actual blockchain/payment API
     // For now, this is just a demo confirmation
-    
-    // Optional: Clear form after submission
-    // piAmountInput.value = '';
-    // usdtAmountInput.value = '';
-    // walletAddressInput.value = '';
-    // document.getElementById('promoBonus').textContent = '+$0.00';
 }
 
 // ========================================
@@ -283,11 +349,22 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Prevent negative numbers in Pi amount input
+// Prevent negative numbers in amount inputs
 document.addEventListener('DOMContentLoaded', function() {
     const piAmountInput = document.getElementById('piAmount');
+    const usdtAmountInput = document.getElementById('usdtAmount');
+    
     if (piAmountInput) {
         piAmountInput.addEventListener('keydown', function(e) {
+            // Prevent minus sign
+            if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    if (usdtAmountInput) {
+        usdtAmountInput.addEventListener('keydown', function(e) {
             // Prevent minus sign
             if (e.key === '-' || e.key === 'e' || e.key === 'E') {
                 e.preventDefault();
@@ -310,3 +387,4 @@ function formatWalletAddress(address) {
 console.log('Pi Dex Script Loaded Successfully');
 console.log('GCV Price (Fixed): $' + piPriceUSD.toFixed(2));
 console.log('Selected Network: ' + selectedNetwork);
+console.log('Trading Mode: ' + (isBuyingPi ? 'Buying Pi' : 'Selling Pi'));
