@@ -12,7 +12,44 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeFeedbackPage();
     initializeDexPage();
     initializeMobileMenu();
+    setupInputListeners();
 });
+
+// ========================================
+// SETUP INPUT LISTENERS
+// ========================================
+function setupInputListeners() {
+    const firstAmount = document.getElementById('firstAmount');
+    const secondAmount = document.getElementById('secondAmount');
+    
+    if (firstAmount) {
+        firstAmount.addEventListener('input', function() {
+            if (!isBuyingPi) {
+                calculateAmount();
+            }
+        });
+        
+        firstAmount.addEventListener('keydown', function(e) {
+            if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    if (secondAmount) {
+        secondAmount.addEventListener('input', function() {
+            if (isBuyingPi) {
+                calculateAmount();
+            }
+        });
+        
+        secondAmount.addEventListener('keydown', function(e) {
+            if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                e.preventDefault();
+            }
+        });
+    }
+}
 
 // ========================================
 // MOBILE MENU FUNCTIONALITY
@@ -124,9 +161,9 @@ function initializeFeedbackPage() {
 // DEX PAGE FUNCTIONALITY
 // ========================================
 function initializeDexPage() {
-    const piAmountInput = document.getElementById('piAmount');
+    const firstAmount = document.getElementById('firstAmount');
     
-    if (piAmountInput) {
+    if (firstAmount) {
         // Set GCV price immediately
         updatePriceDisplay();
     }
@@ -145,95 +182,148 @@ function updatePriceDisplay() {
     
     // Update promo price (now same as regular price)
     if (promoPriceElement) {
-        promoPriceElement.textContent = '$' + piPriceUSD.toFixed(2);
+        promoPriceElement.textContent = '1 PI = $' + piPriceUSD.toFixed(2) + ' USDT';
     }
     
     // Update exchange rate
     if (exchangeRateElement) {
         exchangeRateElement.textContent = '1 PI = $' + piPriceUSD.toFixed(2) + ' USDT';
     }
-    
-    // Recalculate amount if input is already entered
-    calculateAmount();
 }
 
 // Calculate output amount based on input amount
 function calculateAmount() {
-    const piAmountInput = document.getElementById('piAmount');
-    const usdtAmountInput = document.getElementById('usdtAmount');
+    const firstAmount = document.getElementById('firstAmount');
+    const secondAmount = document.getElementById('secondAmount');
     
-    if (!piAmountInput || !usdtAmountInput) {
+    if (!firstAmount || !secondAmount) {
         return;
     }
     
     if (isBuyingPi) {
         // Buying Pi with USDT
-        const usdtAmount = parseFloat(usdtAmountInput.value) || 0;
+        const usdtAmount = parseFloat(firstAmount.value) || 0;
         const piAmount = usdtAmount / piPriceUSD;
-        piAmountInput.value = piAmount > 0 ? piAmount.toFixed(4) : '';
+        secondAmount.value = piAmount > 0 ? piAmount.toFixed(4) : '';
     } else {
         // Selling Pi for USDT
-        const piAmount = parseFloat(piAmountInput.value) || 0;
+        const piAmount = parseFloat(firstAmount.value) || 0;
         const usdtAmount = piAmount * piPriceUSD;
-        usdtAmountInput.value = usdtAmount > 0 ? usdtAmount.toFixed(2) : '';
+        secondAmount.value = usdtAmount > 0 ? usdtAmount.toFixed(2) : '';
     }
-}
-
-// For backwards compatibility
-function calculateUSDT() {
-    calculateAmount();
 }
 
 // Switch between buying and selling Pi
 function switchTradePair() {
     isBuyingPi = !isBuyingPi;
     
-    const piAmountInput = document.getElementById('piAmount');
-    const usdtAmountInput = document.getElementById('usdtAmount');
-    const fromLabel = document.querySelector('.token-input:first-of-type .token-header span:first-child');
-    const toLabel = document.querySelector('.token-input:last-of-type .token-header span:first-child');
-    const tradeButton = document.querySelector('.btn');
-    const walletAddressLabel = document.querySelector('.wallet-address-section label');
-    const walletAddressHint = document.querySelector('.wallet-address-section small');
+    const firstAmount = document.getElementById('firstAmount');
+    const secondAmount = document.getElementById('secondAmount');
+    const firstLabel = document.getElementById('firstLabel');
+    const secondLabel = document.getElementById('secondLabel');
+    const firstTokenImg = document.getElementById('firstTokenImg');
+    const secondTokenImg = document.getElementById('secondTokenImg');
+    const firstTokenName = document.getElementById('firstTokenName');
+    const secondTokenName = document.getElementById('secondTokenName');
+    const tradeButton = document.getElementById('tradeButton');
+    const walletLabel = document.getElementById('walletLabel');
+    const walletHint = document.getElementById('walletHint');
+    const walletAddress = document.getElementById('walletAddress');
     
     // Clear inputs
-    if (piAmountInput) piAmountInput.value = '';
-    if (usdtAmountInput) usdtAmountInput.value = '';
+    if (firstAmount) firstAmount.value = '';
+    if (secondAmount) secondAmount.value = '';
     
-    // Update labels
     if (isBuyingPi) {
-        // Buying Pi with USDT
-        if (fromLabel) fromLabel.textContent = 'From';
-        if (toLabel) toLabel.textContent = 'To';
+        // Switch to: USDT -> Pi (Buying Pi)
+        
+        // Update token images and names
+        if (firstTokenImg) firstTokenImg.src = 'usdtlogo.png';
+        if (firstTokenImg) firstTokenImg.alt = 'USDT';
+        if (firstTokenName) firstTokenName.textContent = 'USDT';
+        
+        if (secondTokenImg) secondTokenImg.src = 'pilogo.png';
+        if (secondTokenImg) secondTokenImg.alt = 'Pi';
+        if (secondTokenName) secondTokenName.textContent = 'PI';
+        
+        // Update labels
+        if (firstLabel) firstLabel.textContent = 'From';
+        if (secondLabel) secondLabel.textContent = 'To';
+        
+        // Update button
         if (tradeButton) tradeButton.textContent = 'Buy Pi Coin';
-        if (walletAddressLabel) walletAddressLabel.textContent = 'Receiving Pi Wallet Address *';
-        if (walletAddressHint) walletAddressHint.textContent = 'Enter your Pi wallet address where you want to receive Pi';
         
-        // Make USDT input editable and Pi input readonly
-        if (usdtAmountInput) {
-            usdtAmountInput.removeAttribute('readonly');
-            usdtAmountInput.setAttribute('oninput', 'calculateAmount()');
+        // Update wallet labels
+        if (walletLabel) walletLabel.textContent = 'Receiving Pi Wallet Address *';
+        if (walletHint) walletHint.textContent = 'Enter your Pi wallet address where you want to receive Pi';
+        if (walletAddress) walletAddress.placeholder = 'Enter your Pi wallet address';
+        
+        // Make first input (USDT) editable, second (Pi) readonly
+        if (firstAmount) {
+            firstAmount.removeAttribute('readonly');
         }
-        if (piAmountInput) {
-            piAmountInput.setAttribute('readonly', 'true');
-            piAmountInput.removeAttribute('oninput');
+        if (secondAmount) {
+            secondAmount.setAttribute('readonly', 'true');
         }
+        
+        // Remove network selector from first token
+        const firstToken = document.getElementById('firstToken');
+        if (firstToken) {
+            firstToken.onclick = null;
+            // Remove dropdown arrow if exists
+            const arrows = firstToken.querySelectorAll('span');
+            arrows.forEach(function(span) {
+                if (span.textContent === '▼') {
+                    span.remove();
+                }
+            });
+        }
+        
+        // Keep network selector on second token (which is now empty for Pi)
+        
     } else {
-        // Selling Pi for USDT
-        if (fromLabel) fromLabel.textContent = 'From';
-        if (toLabel) toLabel.textContent = 'To';
-        if (tradeButton) tradeButton.textContent = 'Sell Pi Coin';
-        if (walletAddressLabel) walletAddressLabel.textContent = 'Receiving Wallet Address *';
-        if (walletAddressHint) walletAddressHint.textContent = 'Enter the wallet address where you want to receive USDT';
+        // Switch to: Pi -> USDT (Selling Pi)
         
-        // Make Pi input editable and USDT input readonly
-        if (piAmountInput) {
-            piAmountInput.removeAttribute('readonly');
-            piAmountInput.setAttribute('oninput', 'calculateAmount()');
+        // Update token images and names
+        if (firstTokenImg) firstTokenImg.src = 'pilogo.png';
+        if (firstTokenImg) firstTokenImg.alt = 'Pi';
+        if (firstTokenName) firstTokenName.textContent = 'PI';
+        
+        if (secondTokenImg) secondTokenImg.src = 'usdtlogo.png';
+        if (secondTokenImg) secondTokenImg.alt = 'USDT';
+        if (secondTokenName) secondTokenName.textContent = 'USDT';
+        
+        // Update labels
+        if (firstLabel) firstLabel.textContent = 'From';
+        if (secondLabel) secondLabel.textContent = 'To';
+        
+        // Update button
+        if (tradeButton) tradeButton.textContent = 'Sell Pi Coin';
+        
+        // Update wallet labels
+        if (walletLabel) walletLabel.textContent = 'Receiving Wallet Address *';
+        if (walletHint) walletHint.textContent = 'Enter the wallet address where you want to receive USDT';
+        if (walletAddress) walletAddress.placeholder = 'Enter your USDT wallet address';
+        
+        // Make first input (Pi) editable, second (USDT) readonly
+        if (firstAmount) {
+            firstAmount.removeAttribute('readonly');
         }
-        if (usdtAmountInput) {
-            usdtAmountInput.setAttribute('readonly', 'true');
-            usdtAmountInput.removeAttribute('oninput');
+        if (secondAmount) {
+            secondAmount.setAttribute('readonly', 'true');
+        }
+        
+        // Add network selector back to second token if not exists
+        const secondToken = document.getElementById('secondToken');
+        if (secondToken) {
+            const hasArrow = Array.from(secondToken.querySelectorAll('span')).some(function(span) {
+                return span.textContent === '▼';
+            });
+            if (!hasArrow) {
+                const arrow = document.createElement('span');
+                arrow.textContent = '▼';
+                secondToken.appendChild(arrow);
+            }
         }
     }
 }
@@ -241,7 +331,11 @@ function switchTradePair() {
 // ========================================
 // NETWORK SELECTION
 // ========================================
-function toggleNetworkMenu() {
+function toggleNetworkMenu(event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
     const menu = document.getElementById('networkMenu');
     if (menu) {
         menu.classList.toggle('hidden');
@@ -263,40 +357,52 @@ function selectNetwork(network) {
     }
 }
 
+// Close dropdown menus when clicking outside
+document.addEventListener('click', function(e) {
+    const networkMenu = document.getElementById('networkMenu');
+    const secondToken = document.getElementById('secondToken');
+    
+    if (networkMenu && secondToken) {
+        if (!secondToken.contains(e.target) && !networkMenu.contains(e.target)) {
+            networkMenu.classList.add('hidden');
+        }
+    }
+});
+
 // ========================================
 // TRADE EXECUTION
 // ========================================
 function executeTrade() {
-    const piAmountInput = document.getElementById('piAmount');
-    const usdtAmountInput = document.getElementById('usdtAmount');
-    const walletAddressInput = document.getElementById('walletAddress');
+    const firstAmount = document.getElementById('firstAmount');
+    const secondAmount = document.getElementById('secondAmount');
+    const walletAddress = document.getElementById('walletAddress');
     
     // Check if all elements exist
-    if (!piAmountInput || !usdtAmountInput || !walletAddressInput) {
+    if (!firstAmount || !secondAmount || !walletAddress) {
         alert('Please fill in all required fields.');
         return;
     }
     
-    const piAmount = parseFloat(piAmountInput.value);
-    const usdtAmount = parseFloat(usdtAmountInput.value);
-    const walletAddress = walletAddressInput.value.trim();
+    const amount1 = parseFloat(firstAmount.value);
+    const amount2 = parseFloat(secondAmount.value);
+    const wallet = walletAddress.value.trim();
     
     // Validate amounts
-    if (!piAmount || piAmount <= 0 || isNaN(piAmount)) {
-        alert('Please enter a valid amount of Pi.');
-        piAmountInput.focus();
+    if (!amount1 || amount1 <= 0 || isNaN(amount1)) {
+        alert('Please enter a valid amount.');
+        firstAmount.focus();
         return;
     }
     
-    if (!usdtAmount || usdtAmount <= 0 || isNaN(usdtAmount)) {
+    if (!amount2 || amount2 <= 0 || isNaN(amount2)) {
         alert('Please enter a valid amount.');
         return;
     }
     
     // Validate wallet address
-    if (!walletAddress || walletAddress.length < 10) {
+    if (!wallet || wallet.length < 10) {
         alert('Please enter a valid wallet address (minimum 10 characters).');
-        walletAddressInput.focus();
+        walletAddress.focus();
         return;
     }
     
@@ -306,10 +412,10 @@ function executeTrade() {
         confirmMessage = 
             'Trade Confirmation\n\n' +
             '════════════════════════\n' +
-            'Spending: ' + usdtAmount.toFixed(2) + ' USDT\n' +
-            'Receiving: ' + piAmount.toFixed(4) + ' PI\n' +
+            'Spending: ' + amount1.toFixed(2) + ' USDT\n' +
+            'Receiving: ' + amount2.toFixed(4) + ' PI\n' +
             'Network: ' + selectedNetwork + '\n' +
-            'Pi Wallet: ' + walletAddress.substring(0, 10) + '...' + walletAddress.substring(walletAddress.length - 6) + '\n' +
+            'Pi Wallet: ' + wallet.substring(0, 10) + '...' + wallet.substring(wallet.length - 6) + '\n' +
             '════════════════════════\n\n' +
             'Transaction is being processed...\n' +
             'You will receive your Pi shortly.';
@@ -317,10 +423,10 @@ function executeTrade() {
         confirmMessage = 
             'Trade Confirmation\n\n' +
             '════════════════════════\n' +
-            'Selling: ' + piAmount.toFixed(4) + ' PI\n' +
-            'Receiving: ' + usdtAmount.toFixed(2) + ' USDT\n' +
+            'Selling: ' + amount1.toFixed(4) + ' PI\n' +
+            'Receiving: ' + amount2.toFixed(2) + ' USDT\n' +
             'Network: ' + selectedNetwork + '\n' +
-            'USDT Wallet: ' + walletAddress.substring(0, 10) + '...' + walletAddress.substring(walletAddress.length - 6) + '\n' +
+            'USDT Wallet: ' + wallet.substring(0, 10) + '...' + wallet.substring(wallet.length - 6) + '\n' +
             '════════════════════════\n\n' +
             'Transaction is being processed...\n' +
             'You will receive a confirmation shortly.';
@@ -328,57 +434,6 @@ function executeTrade() {
     
     // Show confirmation alert
     alert(confirmMessage);
-    
-    // Here you would integrate with actual blockchain/payment API
-    // For now, this is just a demo confirmation
-}
-
-// ========================================
-// UTILITY FUNCTIONS
-// ========================================
-
-// Close dropdown menus when clicking outside
-document.addEventListener('click', function(e) {
-    const networkMenu = document.getElementById('networkMenu');
-    const tokenSelect = document.querySelector('.token-select');
-    
-    if (networkMenu && tokenSelect) {
-        if (!tokenSelect.contains(e.target) && !networkMenu.contains(e.target)) {
-            networkMenu.classList.add('hidden');
-        }
-    }
-});
-
-// Prevent negative numbers in amount inputs
-document.addEventListener('DOMContentLoaded', function() {
-    const piAmountInput = document.getElementById('piAmount');
-    const usdtAmountInput = document.getElementById('usdtAmount');
-    
-    if (piAmountInput) {
-        piAmountInput.addEventListener('keydown', function(e) {
-            // Prevent minus sign
-            if (e.key === '-' || e.key === 'e' || e.key === 'E') {
-                e.preventDefault();
-            }
-        });
-    }
-    
-    if (usdtAmountInput) {
-        usdtAmountInput.addEventListener('keydown', function(e) {
-            // Prevent minus sign
-            if (e.key === '-' || e.key === 'e' || e.key === 'E') {
-                e.preventDefault();
-            }
-        });
-    }
-});
-
-// Format wallet address for better readability on mobile
-function formatWalletAddress(address) {
-    if (!address || address.length < 20) {
-        return address;
-    }
-    return address.substring(0, 10) + '...' + address.substring(address.length - 6);
 }
 
 // ========================================
