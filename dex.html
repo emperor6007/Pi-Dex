@@ -6,6 +6,53 @@
     <title>Exchange - Pi Dex</title>
     <link rel="icon" type="png" href="favicon.png">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .network-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-top: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1000;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .network-menu.hidden {
+            display: none;
+        }
+        
+        .network-option {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .network-option:hover {
+            background: #f5f5f5;
+        }
+        
+        .network-option:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .network-option:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .token-input {
+            position: relative;
+        }
+        
+        .arrow-down {
+            transition: transform 0.3s ease;
+        }
+        
+        .arrow-down:hover {
+            transform: scale(1.2);
+        }
+    </style>
 </head>
 <body>
     <div id="dexPage">
@@ -46,16 +93,16 @@
                     </div>
                 </div>
 
-                <div class="token-input">
+                <div class="token-input" id="firstInput">
                     <div class="token-header">
-                        <span>From</span>
+                        <span id="firstLabel">From</span>
                         <span>Balance: _._</span>
                     </div>
                     <div class="token-body">
-                        <input type="number" id="piAmount" placeholder="0.0" oninput="calculateAmount()">
-                        <div class="token-select">
-                            <img src="pilogo.png" alt="Pi" class="token-logo">
-                            <span>PI</span>
+                        <input type="number" id="firstAmount" placeholder="0.0">
+                        <div class="token-select" id="firstToken">
+                            <img src="pilogo.png" alt="Pi" class="token-logo" id="firstTokenImg">
+                            <span id="firstTokenName">PI</span>
                         </div>
                     </div>
                 </div>
@@ -64,42 +111,42 @@
                     ↓
                 </div>
 
-                <div class="token-input">
+                <div class="token-input" id="secondInput">
                     <div class="token-header">
-                        <span>To</span>
+                        <span id="secondLabel">To</span>
                         <span>Network: <span id="selectedNetwork">BEP20</span></span>
                     </div>
                     <div class="token-body">
-                        <input type="number" id="usdtAmount" placeholder="0.0" readonly>
-                        <div class="token-select" onclick="toggleNetworkMenu()">
-                            <img src="usdtlogo.png" alt="USDT" class="token-logo">
-                            <span>USDT</span>
+                        <input type="number" id="secondAmount" placeholder="0.0" readonly>
+                        <div class="token-select" id="secondToken" onclick="toggleNetworkMenu(event)">
+                            <img src="usdtlogo.png" alt="USDT" class="token-logo" id="secondTokenImg">
+                            <span id="secondTokenName">USDT</span>
                             <span>▼</span>
+                        </div>
+                    </div>
+                    
+                    <div id="networkMenu" class="hidden network-menu">
+                        <div class="network-option" onclick="selectNetwork('BEP20')">
+                            USDT (BEP20) - Binance Smart Chain
+                        </div>
+                        <div class="network-option" onclick="selectNetwork('ERC20')">
+                            USDT (ERC20) - Ethereum
+                        </div>
+                        <div class="network-option" onclick="selectNetwork('TRC20')">
+                            USDT (TRC20) - Tron
                         </div>
                     </div>
                 </div>
 
-                <div id="networkMenu" class="hidden network-menu">
-                    <div class="network-option" onclick="selectNetwork('BEP20')">
-                        USDT (BEP20) - Binance Smart Chain
-                    </div>
-                    <div class="network-option" onclick="selectNetwork('ERC20')">
-                        USDT (ERC20) - Ethereum
-                    </div>
-                    <div class="network-option" onclick="selectNetwork('TRC20')">
-                        USDT (TRC20) - Tron
-                    </div>
-                </div>
-
                 <div class="wallet-address-section">
-                    <label for="walletAddress">Receiving Wallet Address *</label>
+                    <label for="walletAddress" id="walletLabel">Receiving Wallet Address *</label>
                     <input 
                         type="text" 
                         id="walletAddress" 
                         placeholder="Enter your USDT wallet address"
                         required
                     >
-                    <small>Enter the wallet address where you want to receive USDT</small>
+                    <small id="walletHint">Enter the wallet address where you want to receive USDT</small>
                 </div>
 
                 <div class="exchange-info">
@@ -113,7 +160,7 @@
                     </div>
                 </div>
 
-                <button class="btn" style="width: 100%; margin-top: 1rem;" onclick="executeTrade()">Sell Pi Coin</button>
+                <button class="btn" id="tradeButton" style="width: 100%; margin-top: 1rem;" onclick="executeTrade()">Sell Pi Coin</button>
             </div>
         </div>
     </div>
