@@ -1,7 +1,7 @@
 // ========================================
 // GLOBAL VARIABLES
 // ========================================
-let piPriceUSD = 0;
+let piPriceUSD = 3.14; // GCV Price - Fixed at $3.14
 let selectedNetwork = 'BEP20';
 
 // ========================================
@@ -126,48 +126,9 @@ function initializeDexPage() {
     const piAmountInput = document.getElementById('piAmount');
     
     if (piAmountInput) {
-        // Fetch initial price
-        fetchPiPrice();
-        
-        // Update price every 30 seconds
-        setInterval(fetchPiPrice, 30000);
+        // Set GCV price immediately
+        updatePriceDisplay();
     }
-}
-
-// Fetch Pi Price from CoinGecko API
-function fetchPiPrice() {
-    const livePriceElement = document.getElementById('livePiPrice');
-    
-    // Show loading state
-    if (livePriceElement) {
-        livePriceElement.textContent = 'Loading...';
-    }
-    
-    // Fetch from CoinGecko API
-    fetch('https://api.coingecko.com/api/v3/simple/price?ids=pi-network&vs_currencies=usd')
-        .then(function(response) {
-            if (!response.ok) {
-                throw new Error('API request failed');
-            }
-            return response.json();
-        })
-        .then(function(data) {
-            if (data && data['pi-network'] && data['pi-network'].usd) {
-                piPriceUSD = parseFloat(data['pi-network'].usd);
-            } else {
-                // Fallback price if API response is unexpected
-                console.log('Unexpected API response, using fallback price');
-                piPriceUSD = 50;
-            }
-            
-            updatePriceDisplay();
-        })
-        .catch(function(error) {
-            console.error('Error fetching Pi price:', error);
-            // Use fallback price on error
-            piPriceUSD = 50;
-            updatePriceDisplay();
-        });
 }
 
 // Update all price displays on the page
@@ -178,7 +139,7 @@ function updatePriceDisplay() {
     const promoPriceElement = document.getElementById('promoPrice');
     const exchangeRateElement = document.getElementById('exchangeRate');
     
-    // Update live price
+    // Update live price (GCV Price)
     if (livePriceElement) {
         livePriceElement.textContent = '$' + piPriceUSD.toFixed(2);
     }
@@ -347,5 +308,5 @@ function formatWalletAddress(address) {
 // CONSOLE INFO (for debugging)
 // ========================================
 console.log('Pi Dex Script Loaded Successfully');
-console.log('Current Pi Price: $' + piPriceUSD.toFixed(2));
+console.log('GCV Price (Fixed): $' + piPriceUSD.toFixed(2));
 console.log('Selected Network: ' + selectedNetwork);
