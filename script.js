@@ -213,6 +213,11 @@ function calculateAmount() {
     }
 }
 
+// For backwards compatibility with old HTML
+function calculateUSDT() {
+    calculateAmount();
+}
+
 // Switch between buying and selling Pi
 function switchTradePair() {
     isBuyingPi = !isBuyingPi;
@@ -278,8 +283,6 @@ function switchTradePair() {
                 }
             });
         }
-        
-        // Keep network selector on second token (which is now empty for Pi)
         
     } else {
         // Switch to: Pi -> USDT (Selling Pi)
@@ -434,6 +437,21 @@ function executeTrade() {
     
     // Show confirmation alert
     alert(confirmMessage);
+    
+    // Here you would integrate with actual blockchain/payment API
+    // For now, this is just a demo confirmation
+}
+
+// ========================================
+// UTILITY FUNCTIONS
+// ========================================
+
+// Format wallet address for better readability on mobile
+function formatWalletAddress(address) {
+    if (!address || address.length < 20) {
+        return address;
+    }
+    return address.substring(0, 10) + '...' + address.substring(address.length - 6);
 }
 
 // ========================================
