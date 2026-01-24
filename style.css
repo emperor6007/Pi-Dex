@@ -572,13 +572,13 @@ nav {
    ======================================== */
 .network-menu {
     position: absolute;
-    background: rgba(40, 20, 50, 0.95);
+    background: #000000;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(252, 213, 53, 0.3);
+    border: 1px solid rgba(252, 213, 53, 0.5);
     border-radius: 10px;
     margin-top: 0.5rem;
     padding: 0.5rem;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
     z-index: 1000;
     min-width: 280px;
 }
@@ -589,13 +589,14 @@ nav {
     border-radius: 8px;
     margin-bottom: 0.25rem;
     transition: all 0.2s;
-    color: #fff;
+    color: #ffffff !important;
     font-size: 0.95rem;
+    background: transparent;
 }
 
 .network-option:hover {
-    background: rgba(252, 213, 53, 0.2);
-    color: #FCD535;
+    background: rgba(252, 213, 53, 0.3);
+    color: #FCD535 !important;
 }
 
 .network-option:last-child {
