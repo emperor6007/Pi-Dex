@@ -463,6 +463,7 @@ nav {
     padding: 1.5rem;
     border-radius: 15px;
     margin-bottom: 1rem;
+    position: relative;
 }
 
 .token-header {
@@ -566,23 +567,35 @@ nav {
     margin-bottom: 0;
 }
 
+/* ========================================
+   NETWORK DROPDOWN MENU - FIXED
+   ======================================== */
 .network-menu {
-    background: rgba(108, 52, 131, 0.4);
-    padding: 1rem;
+    position: absolute;
+    background: rgba(40, 20, 50, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(252, 213, 53, 0.3);
     border-radius: 10px;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    min-width: 280px;
 }
 
 .network-option {
     cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 5px;
-    margin-bottom: 0.5rem;
-    transition: background 0.3s;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.25rem;
+    transition: all 0.2s;
+    color: #fff;
+    font-size: 0.95rem;
 }
 
 .network-option:hover {
     background: rgba(252, 213, 53, 0.2);
+    color: #FCD535;
 }
 
 .network-option:last-child {
@@ -803,6 +816,13 @@ footer {
         padding: 0.85rem;
     }
 
+    /* Network Dropdown Mobile */
+    .network-menu {
+        min-width: 100%;
+        left: 0;
+        right: 0;
+    }
+
     /* Footer */
     .footer-container {
         flex-direction: column;
@@ -860,6 +880,12 @@ footer {
     /* DEX Page */
     .dex-card {
         padding: 1.5rem 1rem;
+    }
+
+    /* Network Dropdown Small Mobile */
+    .network-option {
+        font-size: 0.85rem;
+        padding: 0.65rem 0.85rem;
     }
 
     /* Stats */
