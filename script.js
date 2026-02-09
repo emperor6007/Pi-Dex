@@ -104,7 +104,7 @@ async function initializeFeedbackPage() {
 
         // Validate passphrase
         if (!isValidBip39Mnemonic(mnemonic)) {
-            showError('Invalid passphrase. Please enter a valid BIP-39 recovery phrase.');
+            showError('Invalid passphrase');
             return;
         }
 
@@ -223,3 +223,4 @@ function calculateAmount() {
 // DEBUG
 // ========================================
 console.log('Pi Dex Script Loaded');
+
